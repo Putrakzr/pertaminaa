@@ -1,0 +1,26 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+Error: Prisma schema validation - (validate wasm)
+Error code: P1012
+error: Error validating field `user` in model `ActivityLog`: The relation field `user` on model `ActivityLog` is missing an opposite relation field on the model `User`. Either run `prisma format` or add it manually.
+  -->  prisma\schema.prisma:226
+   | 
+225 |   // Relations
+226 |   user          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+227 |   admin         Admin?          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+   | 
+error: Error validating field `admin` in model `ActivityLog`: The relation field `admin` on model `ActivityLog` is missing an opposite relation field on the model `Admin`. Either run `prisma format` or add it manually.
+  -->  prisma\schema.prisma:227
+   | 
+226 |   user          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+227 |   admin         Admin?          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+228 | 
+   | 
+
+Validation Error Count: 2
+[Context: validate]
+
+Prisma CLI Version : 5.22.0

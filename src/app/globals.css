@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --pertamina-primary: #93120C;
+  --pertamina-red: #ED1C24;
+  --pertamina-blue: #0057B8;
+  --pertamina-dark: #1A1A2E;
+  --pertamina-light: #F8F9FA;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #F8F9FA;
+  color: #1A1A2E;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0057B8;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #004495;
+}
+
+/* Custom classes */
+@layer components {
+  .btn-primary {
+    @apply bg-pertamina-blue text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+  
+  .btn-danger {
+    @apply bg-pertamina-red text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-pertamina-blue text-pertamina-blue px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-pertamina-blue hover:text-white;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-pertamina-blue focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .status-pending {
+    @apply bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-approved {
+    @apply bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-rejected {
+    @apply bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .risiko-rendah {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .risiko-sedang {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .risiko-tinggi {
+    @apply bg-orange-100 text-orange-800;
+  }
+
+  .risiko-kritis {
+    @apply bg-red-100 text-red-800;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading spinner */
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #0057B8;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

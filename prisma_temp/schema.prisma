@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int               @id @default(autoincrement())
+  nama          String            @db.VarChar(255)
+  email         String            @unique @db.VarChar(255)
+  password      String            @db.VarChar(255)
+  jabatan       String            @db.VarChar(100)
+  lokasiSite    String            @db.VarChar(255)
+  foto          String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  activityLogs  ActivityLog[]
+  dataInjeksi   DataInjeksi[]
+  laporan       LaporanInspeksi[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Admin {
+  id            Int            @id @default(autoincrement())
+  nama          String         @db.VarChar(255)
+  email         String         @unique @db.VarChar(255)
+  password      String         @db.VarChar(255)
+  role          String         @default("admin") @db.VarChar(50)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  activityLogs  ActivityLog[]
+  notifications Notification[]
+
+  @@map("admins")
+}
+
+model LaporanInspeksi {
+  id                  Int       @id @default(autoincrement())
+  userId              Int
+  tanggal             DateTime  @db.Date
+  lokasi              String    @db.VarChar(255)
+  kategori            String    @db.VarChar(100)
+  deskripsi           String    @db.Text
+  risiko              String    @db.VarChar(50)
+  tindakan            String    @db.Text
+  foto                String?   @db.Text
+  status              String    @default("pending") @db.VarChar(20)
+  catatan             String?   @db.Text
+  dueDate             DateTime? @db.Date
+  fungsi              String?   @db.VarChar(255)
+  statusTemuan        String    @default("open") @db.VarChar(20)
+  tanggalPenyelesaian DateTime? @db.Date
+  catatanPenyelesaian String?   @db.Text
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "laporan_inspeksi_userId_fkey")
+  @@map("laporan_inspeksi")
+}
+
+model DataInjeksi {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  tanggal          DateTime @db.Date
+  nilaiRaw         Float    @db.Float
+  hasilPerhitungan Float?   @db.Float
+  formulaUsed      String?  @db.VarChar(100)
+  status           String   @default("pending") @db.VarChar(20)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "data_injeksi_userId_fkey")
+  @@map("data_injeksi")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  adminId   Int?
+  type      String   @db.VarChar(50)
+  title     String   @db.VarChar(255)
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  data      String?  @db.Text
+  createdAt DateTime @default(now())
+  admin     Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([adminId], map: "notifications_adminId_fkey")
+  @@index([userId], map: "notifications_userId_fkey")
+  @@map("notifications")
+}
+
+model Material {
+  id                Int       @id @default(autoincrement())
+  namaMaterial      String    @db.VarChar(255)
+  kodeMaterial      String?   @db.VarChar(100)
+  spesifikasi       String?   @db.Text
+  tahunPembelian    Int?      @db.Year
+  vendor            String?   @db.VarChar(255)
+  jumlah            Int?
+  unit              String?   @db.VarChar(50)
+  lokasiPenyimpanan String?   @db.VarChar(255)
+  dokumentasi       String?   @db.Text
+  typePeralatan     String?   @db.VarChar(255)
+  masaBerlakuType   DateTime? @db.Date
+  kondisi           String?   @db.VarChar(100)
+  catatan           String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("materials")
+}
+
+model KompetensiPersonil {
+  id                     Int       @id @default(autoincrement())
+  nama                   String    @db.VarChar(255)
+  nip                    String?   @db.VarChar(100)
+  jabatan                String?   @db.VarChar(255)
+  unitKerja              String?   @db.VarChar(255)
+  jenisKompetensi        String    @db.VarChar(255)
+  namaSertifikasi        String?   @db.VarChar(255)
+  nomorSertifikasi       String?   @db.VarChar(100)
+  lembagaPenerbit        String?   @db.VarChar(255)
+  tanggalTerbit          DateTime? @db.Date
+  masaBerlakuSertifikasi DateTime? @db.Date
+  statusKompetensi       String    @default("aktif") @db.VarChar(50)
+  catatan                String?   @db.Text
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@map("kompetensi_personil")
+}
+
+model SertifikasiPeralatan {
+  id                             Int       @id @default(autoincrement())
+  namaPeralatan                  String    @db.VarChar(255)
+  kodePeralatan                  String?   @db.VarChar(100)
+  jenisPeralatan                 String?   @db.VarChar(255)
+  merk                           String?   @db.VarChar(255)
+  type                           String?   @db.VarChar(255)
+  nomorSeri                      String?   @db.VarChar(100)
+  tahunProduksi                  Int?      @db.Year
+  lokasiPemasangan               String?   @db.VarChar(255)
+  namaOperator                   String?   @db.VarChar(255)
+  nomorSertifikasiOperator       String?   @db.VarChar(100)
+  jenisSertifikasiOperator       String?   @db.VarChar(255)
+  masaBerlakuSertifikasiOperator DateTime? @db.Date
+  nomorSertifikatPeralatan       String?   @db.VarChar(100)
+  lembagaPenerbitSertifikat      String?   @db.VarChar(255)
+  masaBerlakuSertifikatPeralatan DateTime? @db.Date
+  tanggalTerbitSertifikat        DateTime? @db.Date
+  kondisi                        String?   @db.VarChar(100)
+  hasilInspeksiTerakhir          DateTime? @db.Date
+  catatatan                      String?   @db.Text
+  createdAt                      DateTime  @default(now())
+  updatedAt                      DateTime  @updatedAt
+
+  @@map("sertifikasi_peralatan")
+}
+
+model SystemSettings {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique @db.VarChar(100)
+  value       String   @db.Text
+  category    String   @default("general") @db.VarChar(50)
+  description String?  @db.Text
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?
+  adminId     Int?
+  action      String   @db.VarChar(100)
+  entityType  String   @db.VarChar(100)
+  entityId    Int?
+  description String?  @db.Text
+  ipAddress   String?  @db.VarChar(50)
+  userAgent   String?  @db.Text
+  createdAt   DateTime @default(now())
+  admin       Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([adminId], map: "activity_logs_adminId_fkey")
+  @@index([userId], map: "activity_logs_userId_fkey")
+  @@map("activity_logs")
+}

@@ -1,0 +1,299 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============== USER MODEL ==============
+model User {
+  id            Int             @id @default(autoincrement())
+  nama          String          @db.VarChar(255)
+  email         String          @unique @db.VarChar(255)
+  password      String          @db.VarChar(255)
+  jabatan       String          @db.VarChar(100)
+  lokasiSite    String          @db.VarChar(255)
+  foto          String?         @db.Text
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Relations
+  laporan       LaporanInspeksi[]
+  dataInjeksi  DataInjeksi[]
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+  tugas         Tugas[]           @relation("UserTugas")
+
+  @@map("users")
+}
+
+// ============== ADMIN MODEL ==============
+model Admin {
+  id            Int             @id @default(autoincrement())
+  nama          String          @db.VarChar(255)
+  email         String          @unique @db.VarChar(255)
+  password      String          @db.VarChar(255)
+  role          String          @default("admin") @db.VarChar(50)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Relations
+  notifications Notification[]
+  activityLogs  ActivityLog[]
+  tugasDibuat   Tugas[]        @relation("AdminPembuatTugas")
+
+  @@map("admins")
+}
+
+// ============== LAPORAN INSPEKSI MODEL ==============
+model LaporanInspeksi {
+  id                  Int             @id @default(autoincrement())
+  userId              Int
+  tanggal             DateTime        @db.Date
+  lokasi              String          @db.VarChar(255)
+  kategori            String          @db.VarChar(100)
+  deskripsi           String          @db.Text
+  risiko              String          @db.VarChar(50)
+  tindakan            String          @db.Text
+  foto                String?         @db.Text
+  status              String          @default("pending") @db.VarChar(20) // pending, approved, rejected
+  catatan             String?         @db.Text
+  
+  // New fields for Temuan tracking
+  dueDate             DateTime?       @db.Date // Tenggat waktu penyelesaian
+  fungsi              String?         @db.VarChar(255) // Fungsi penanggung jawab
+  statusTemuan        String          @default("open") @db.VarChar(20) // open, in_progress, resolved, closed
+  tanggalPenyelesaian DateTime?       @db.Date // Tanggal temuan diselesaikan
+  catatanPenyelesaian String?         @db.Text // Catatan saat penyelesaian
+  
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  // Relations
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("laporan_inspeksi")
+}
+
+// ============== DATA INJEKSI MODEL ==============
+model DataInjeksi {
+  id                  Int             @id @default(autoincrement())
+  userId              Int
+  tanggal             DateTime        @db.Date
+  nilaiRaw            Float           @db.Float
+  hasilPerhitungan   Float?          @db.Float
+  formulaUsed        String?         @db.VarChar(100)
+  status              String          @default("pending") @db.VarChar(20)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  // Relations
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("data_injeksi")
+}
+
+// ============== NOTIFICATION MODEL ==============
+model Notification {
+  id            Int             @id @default(autoincrement())
+  userId        Int?            // Untuk user (nullable karena bisa ke admin)
+  adminId       Int?            // Untuk admin (nullable karena bisa ke user)
+  type          String          @db.VarChar(50) // laporan_baru, status_update, dll
+  title         String          @db.VarChar(255)
+  message       String          @db.Text
+  isRead        Boolean         @default(false)
+  data          String?         @db.Text // JSON string untuk data tambahan
+  createdAt     DateTime        @default(now())
+
+  // Relations
+  user          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin         Admin?          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// ============== REKAPITULASI MATERIAL MODEL ==============
+model Material {
+  id                    Int             @id @default(autoincrement())
+  namaMaterial          String          @db.VarChar(255)
+  kodeMaterial          String?         @db.VarChar(100)
+  spesifikasi           String?         @db.Text
+  tahunPembelian        Int?            @db.Year
+  vendor                String?         @db.VarChar(255)
+  jumlah                Int?            @db.Int
+  unit                  String?         @db.VarChar(50)
+  lokasiPenyimpanan     String?         @db.VarChar(255)
+  dokumentasi           String?         @db.Text // Link/path dokumentasi peralatan
+  typePeralatan         String?         @db.VarChar(255)
+  masaBerlakuType       DateTime?       @db.Date // Masa berlaku type peralatan
+  kondisi               String?         @db.VarChar(100) // Baik, Rusak,Perlu Perawatan
+  catatan               String?         @db.Text
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@map("materials")
+}
+
+// ============== REKAPITULASI KOMPETENSI PERSONIL MODEL ==============
+model KompetensiPersonil {
+  id                    Int             @id @default(autoincrement())
+  nama                  String          @db.VarChar(255)
+  nip                   String?         @db.VarChar(100)
+  jabatan               String?         @db.VarChar(255)
+  unitKerja             String?         @db.VarChar(255)
+  
+  // Data Kompetensi
+  jenisKompetensi       String          @db.VarChar(255)
+  namaSertifikasi       String?         @db.VarChar(255)
+  nomorSertifikasi      String?         @db.VarChar(100)
+  lembagaPenerbit       String?         @db.VarChar(255)
+  tanggalTerbit         DateTime?       @db.Date
+  masaBerlakuSertifikasi DateTime?     @db.Date
+  
+  // Status
+  statusKompetensi      String          @default("aktif") @db.VarChar(50) // aktif, expired, pending
+  catatan               String?         @db.Text
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@map("kompetensi_personil")
+}
+
+// ============== REKAPITULASI SERTIFIKASI PERALATAN MODEL ==============
+model SertifikasiPeralatan {
+  id                    Int             @id @default(autoincrement())
+  namaPeralatan         String          @db.VarChar(255)
+  kodePeralatan         String?         @db.VarChar(100)
+  jenisPeralatan        String?         @db.VarChar(255)
+  merk                  String?         @db.VarChar(255)
+  type                  String?         @db.VarChar(255)
+  nomorSeri             String?         @db.VarChar(100)
+  tahunProduksi         Int?            @db.Year
+  lokasiPemasangan      String?         @db.VarChar(255)
+  
+  // Sertifikasi Operator
+  namaOperator          String?         @db.VarChar(255)
+  nomorSertifikasiOperator String?      @db.VarChar(100)
+  jenisSertifikasiOperator String?      @db.VarChar(255)
+  masaBerlakuSertifikasiOperator DateTime? @db.Date
+  
+  // Sertifikasi Peralatan
+  nomorSertifikatPeralatan String?       @db.VarChar(100)
+  lembagaPenerbitSertifikat String?     @db.VarChar(255)
+  masaBerlakuSertifikatPeralatan DateTime? @db.Date
+  tanggalTerbitSertifikat DateTime?     @db.Date
+  
+  // Kondisi
+  kondisi               String?         @db.VarChar(100) // Baik, Rusak,Maintenance
+  hasilInspeksiTerakhir DateTime?       @db.Date
+  catatatan             String?         @db.Text
+  
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@map("sertifikasi_peralatan")
+}
+
+// ============== SYSTEM SETTINGS MODEL ==============
+model SystemSettings {
+  id            Int             @id @default(autoincrement())
+  key           String          @unique @db.VarChar(100)
+  value         String          @db.Text
+  category      String          @default("general") @db.VarChar(50)
+  description   String?         @db.Text
+  isVisible     Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("system_settings")
+}
+
+// ============== ACTIVITY LOG MODEL ==============
+model ActivityLog {
+  id            Int             @id @default(autoincrement())
+  userId        Int?            // For user actions
+  adminId       Int?            // For admin actions
+  action        String          @db.VarChar(100) // create, update, delete, login, logout, dll
+  entityType    String          @db.VarChar(100) // user, admin, material, kompetensi, sertifikasi, laporan, dll
+  entityId      Int?            // ID of the affected entity
+  description   String?         @db.Text
+  ipAddress     String?         @db.VarChar(50)
+  userAgent     String?         @db.Text
+  createdAt     DateTime        @default(now())
+
+  // Relations
+  user          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin         Admin?          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("activity_logs")
+}
+
+// ============== MASTER LOKASI MODEL ==============
+model MasterLokasi {
+  id          Int      @id @default(autoincrement())
+  field       String?  @db.VarChar(100)
+  kategori    String?  @db.VarChar(50) // Area atau Sumur
+  nama        String   @db.VarChar(255)
+  keterangan  String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("master_lokasi")
+}
+
+// ============== MASTER KATEGORI MODEL ==============
+model MasterKategori {
+  id        Int      @id @default(autoincrement())
+  nama      String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("master_kategori")
+}
+
+// ============== TUGAS MODEL ==============
+model Tugas {
+  id           Int     @id @default(autoincrement())
+  judul        String  @db.VarChar(255)
+  deskripsi    String  @db.Text
+  fileLampiran String? @db.Text // File dari admin
+
+  // Assignee & Creator
+  userId  Int // User yang mengerjakan
+  adminId Int // Admin yang memberikan tugas
+
+  // Lokasi Tugas
+  lokasiField String? @db.VarChar(255)
+  lokasiArea  String? @db.VarChar(255)
+  lokasiSumur String? @db.VarChar(255)
+
+  // Kategori Tugas
+  kategori    String? @db.VarChar(255)
+
+  // Tanggal target
+  tanggalMulai DateTime? @db.Date
+  dueDate      DateTime? @db.Date
+
+  // Progress pengerjaan
+  dokumenPengerjaan String? @db.Text
+  dataPengerjaan    String? @db.Text
+  fotoPengerjaan    String? @db.Text
+
+  // Hasil Selesai
+  laporanSelesai String? @db.Text
+  fotoSelesai    String? @db.Text
+
+  status String @default("pending") @db.VarChar(20) // pending, in_progress, review, approved, rejected
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user  User  @relation("UserTugas", fields: [userId], references: [id], onDelete: Cascade)
+  admin Admin @relation("AdminPembuatTugas", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("tugas")
+}
+
