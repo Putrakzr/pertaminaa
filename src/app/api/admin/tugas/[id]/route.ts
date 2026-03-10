@@ -57,8 +57,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
       let msg = status === "approved"
         ? `Tugas "${updatedTugas.judul}" telah disetujui.`
         : status === "rejected"
-        ? `Tugas "${updatedTugas.judul}" ditolak. Silakan periksa kembali.`
-        : `Status tugas "${updatedTugas.judul}" diperbarui menjadi: ${status}`;
+          ? `Tugas "${updatedTugas.judul}" ditolak. Silakan periksa kembali.`
+          : `Status tugas "${updatedTugas.judul}" diperbarui menjadi: ${status}`;
 
       try {
         await prisma.notification.create({
